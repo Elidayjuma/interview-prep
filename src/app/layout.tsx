@@ -6,6 +6,10 @@ import "@/css/style.css";
 import "@/css/global.css";
 import React, { useState, useEffect } from "react";
 import Loader from "@/components/common/Loader";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import Script from "next/script";
+
 
 
 export default function RootLayout({
@@ -25,7 +29,11 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
+          <Header />
           {loading ? <Loader /> : children}
+
+          <Script defer data-domain="interviewprep.elidayjuma.com" src="https://analytics.elidayjuma.com/js/script.outbound-links.js" />
+          <Footer />
         </div>
       </body>
     </html>

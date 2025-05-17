@@ -1,11 +1,14 @@
 import React from 'react';
-
-// import SearchForm from './SearchForm';
 import InputForm from './InputForm';
-
 import { heroDetails } from '@/data/hero';
 
-const Hero: React.FC = () => {
+type HeroProps = {
+    form?: React.ReactNode;
+    title?: string;
+    subheading?: string;
+};
+
+const Hero: React.FC<HeroProps> = ({ form, title, subheading }) => {
     return (
         <section
             id="hero"
@@ -20,14 +23,11 @@ const Hero: React.FC = () => {
             </div>
 
             <div className="text-center w-[80vw] mx-auto">
-                <h1 className="text-4xl md:text-6xl md:leading-tight font-bold text-foreground">{heroDetails.heading}</h1>
-                <p className="mt-4 text-foreground ">{heroDetails.subheading}</p>
+                <h1 className="text-4xl md:text-6xl md:leading-tight font-bold text-foreground">{title ? title : heroDetails.heading}</h1>
+                <p className="mt-4 text-foreground ">{subheading ? subheading : heroDetails.subheading}</p>
                 <div className="mt-6 mb-60 sm:gap-4">
-
-                    {/* <SearchForm /> */}
-                    <InputForm />
+                    {form ?? <InputForm />}
                 </div>
-
             </div>
         </section>
     );

@@ -34,8 +34,8 @@ const Header: React.FC = () => {
                     <ul className="hidden md:flex space-x-6">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                <a target="_blank" href={item.url} rel="noopener noreferrer" className="text-foreground hover:underline hover:text-foreground-accent transition-colors flex items-center gap-1">
-                                    {item.text} <GoArrowRight className="h-8 w-8" />
+                                <a target={item.text === "By ElidayJuma.com" ? "_blank" : undefined} href={item.url} rel="noopener noreferrer" className="text-foreground hover:underline hover:text-foreground-accent transition-colors flex items-center gap-1">
+                                    {item.text} {item.text == "By ElidayJuma.com" ? <GoArrowRight className="h-8 w-8" /> : ""}
                                 </a>
                             </li>
                         ))}

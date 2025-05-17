@@ -6,7 +6,16 @@ export const menuItems: IMenuItem[] = [
     //     url: "#features"
     // },  
     {
+        text: "Create Cover Letter",
+        url: "/coverletter"
+    },
+    {
+        text: "Tailor my CV",
+        url: "/Cv"
+    },
+    {
         text: "By ElidayJuma.com",
         url: "https://elidayjuma.com"
-    }
-];
+    },
+    
+]; 
