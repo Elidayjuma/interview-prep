@@ -30,7 +30,7 @@ export default function RootLayout({
       <body suppressHydrationWarning={true}>
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
           <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2092375407734215"
-            crossorigin="anonymous"></script>
+            crossOrigin="anonymous"></script>
           <Header />
           {loading ? <Loader /> : children}
 
