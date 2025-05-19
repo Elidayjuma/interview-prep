@@ -10,8 +10,8 @@ type InterviewQA = {
 };
 
 const InputForm: React.FC = () => {
-    const CHAR_LIMIT = 2000;
-    const WARNING_THRESHOLD = 1800;
+    const CHAR_LIMIT = 5000;
+    const WARNING_THRESHOLD = 4800;
 
     const [description, setDescription] = useState<string>("");
     const [loading, setLoading] = useState(false);
