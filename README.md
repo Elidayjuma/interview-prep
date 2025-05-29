@@ -64,5 +64,5 @@ Have suggestions or want to add a new feature? Feel free to fork the repo and su
 
 ## 📬 Contact
 
-Made with ❤️ by [Eliutherius Juma Wanyonyi](https://elidayjuma.com)  
+Made with ❤️ by [Eliutherius Juma](https://portfolio.elidayjuma.com)  
 Twitter: [@elidayjuma](https://twitter.com/elidayjuma)

@@ -1,10 +1,10 @@
 import { IMenuItem } from "@/types";
 
 export const menuItems: IMenuItem[] = [
-    // {
-    //     text: "Built",
-    //     url: "#features"
-    // },  
+    {
+        text: "Sign in",
+        url: "/auth/signin"
+    },  
     {
         text: "Create Cover Letter",
         url: "/coverletter"
