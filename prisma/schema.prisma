@@ -26,9 +26,13 @@ model User {
 model UserDetail {
   id                  Int     @id @default(autoincrement())
   userId              Int     @unique
-  linkedinUrl         String?
-  phoneNumber         String?
+  careerTitle         String?
   professionalSummary String?
+  phoneNumber         String?
+  linkedinUrl         String?
+  githubUrl           String?
+  portfolioUrl        String?
+  twitterUrl          String?
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

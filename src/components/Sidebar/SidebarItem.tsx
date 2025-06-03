@@ -22,21 +22,33 @@ const SidebarItem = ({ item, pageName, setPageName }: any) => {
 
   const isItemActive = isActive(item);
 
+  const linkClasses = `${isItemActive ? "bg-graydark dark:bg-meta-4" : ""} group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4`;
+
   return (
-    <>
-      <li>
+    <li>
+      {/* If item.target is _blank, use <a>, else use <Link> */}
+      {item.target === "_blank" ? (
+        <a
+          href={item.route}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClasses}
+        >
+          {item.icon}
+          {item.label}
+        </a>
+      ) : (
         <Link
           href={item.route}
           onClick={handleClick}
-          className={`${isItemActive ? "bg-graydark dark:bg-meta-4" : ""} group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4`}
+          className={linkClasses}
         >
           {item.icon}
           {item.label}
           {item.children && (
             <svg
-              className={`absolute right-4 top-1/2 -translate-y-1/2 fill-current ${
-                pageName === item.label.toLowerCase() && "rotate-180"
-              }`}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 fill-current ${pageName === item.label.toLowerCase() && "rotate-180"
+                }`}
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -52,18 +64,17 @@ const SidebarItem = ({ item, pageName, setPageName }: any) => {
             </svg>
           )}
         </Link>
+      )}
 
-        {item.children && (
-          <div
-            className={`translate transform overflow-hidden ${
-              pageName !== item.label.toLowerCase() && "hidden"
+      {item.children && (
+        <div
+          className={`translate transform overflow-hidden ${pageName !== item.label.toLowerCase() && "hidden"
             }`}
-          >
-            <SidebarDropdown item={item.children} />
-          </div>
-        )}
-      </li>
-    </>
+        >
+          <SidebarDropdown item={item.children} />
+        </div>
+      )}
+    </li>
   );
 };
 

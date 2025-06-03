@@ -1,0 +1,176 @@
+"use client";
+
+import React, { useState, ChangeEvent, useRef } from "react";
+import { generateCustomCv } from "@/actions/generate_custom_cv";
+import ReactMarkdown from "react-markdown";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
+const InputForm: React.FC = () => {
+    const CHAR_LIMIT = 5000;
+    const WARNING_THRESHOLD = 4800;
+
+    const [description, setDescription] = useState<string>("");
+    const [cv, setCv] = useState<string>("");
+    const [customCv, setCustomCv] = useState<string>("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string>("");
+    const [descWarning, setDescWarning] = useState(false);
+
+    const pdfRef = useRef<HTMLDivElement>(null);
+
+    const handleDescriptionChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        const input = e.target.value.slice(0, CHAR_LIMIT);
+        setDescription(input);
+        setDescWarning(input.length >= WARNING_THRESHOLD);
+    };
+
+    const handleCvChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        const input = e.target.value.slice(0, CHAR_LIMIT);
+        setCv(input);
+        setDescWarning(input.length >= WARNING_THRESHOLD);
+    };
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setError("");
+        setLoading(true);
+
+        if (!description.trim()) {
+            setError("Please enter the job description.");
+            setLoading(false);
+            return;
+        }
+
+        const customCvfromActions = await generateCustomCv(description, cv);
+        if (!customCvfromActions) {
+            setError("Failed to generate custom CV. Try again.");
+        } else {
+            setCustomCv(customCvfromActions);
+        }
+        setLoading(false);
+    };
+
+    const downloadPDF = async () => {
+        if (!pdfRef.current) return;
+
+        const canvas = await html2canvas(pdfRef.current, {
+            scale: 2, // Higher quality
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pdfWidth;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+        let position = 0;
+
+        // If content is longer than one page, slice it
+        if (imgHeight <= pdfHeight) {
+            pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        } else {
+            while (position < imgHeight) {
+                pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
+                position += pdfHeight;
+                if (position < imgHeight) {
+                    pdf.addPage();
+                }
+            }
+        }
+
+        pdf.save("custom_cv.pdf");
+    };
+
+
+    const copyHtmlToClipboard = async () => {
+        const el = document.getElementById("cv-content");
+        if (!el) return;
+
+        const blob = new Blob([el.innerHTML], { type: "text/html" });
+        const data = [new ClipboardItem({ "text/html": blob })];
+
+        try {
+            await navigator.clipboard.write(data);
+            alert("CV copied with formatting! Paste into Word.");
+        } catch (err) {
+            console.error("Copy failed", err);
+            alert("Failed to copy CV.");
+        }
+    };
+
+    return (
+        <div>
+            <div className="mx-auto max-w-4xl p-4">
+                <form onSubmit={handleSubmit} className="space-y-4 max-w-6xl mx-auto">
+                    {/* Job Description Textarea */}
+                    <div className="flex flex-col md:flex-col gap-4">
+                        <div className="w-full">
+                            <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 mb-1">
+                                Paste the job description here
+                            </label>
+                            <textarea
+                                id="job-description"
+                                value={description}
+                                onChange={handleDescriptionChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg text-sm"
+                                placeholder="e.g., Proficiency in Power BI, SQL, and Excel..."
+                                rows={10}
+                                required
+                            />
+                            <div className="text-xs flex justify-between">
+                                <span className="text-gray-500">{description.length}/{CHAR_LIMIT} characters</span>
+                                {descWarning && <span className="text-yellow-600">Approaching limit</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                    <button
+                        type="submit"
+                        className="w-full text-black bg-primary hover:bg-secondary hover:text-white focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+                    >
+                        {loading ? "Generating Custom CV & Cover letter..." : "Generate Custom CV & Cover Letter"}
+                    </button>
+                </form>
+            </div>
+
+            {/* Custom CV Output */}
+            {customCv && (
+                <div className="mx-auto max-w-4xl p-4 mt-10">
+                    <h3 className="text-xl font-semibold mb-4">Your Custom CV:</h3>
+                    <div
+                        ref={pdfRef}
+                        id="cv-content"
+                        className="bg-white border border-gray-300 rounded-lg p-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-800"
+
+                    >
+                        <ReactMarkdown>{customCv}</ReactMarkdown>
+                    </div>
+                    <div className="mt-4 flex justify-center gap-3">
+                        <button
+                            onClick={downloadPDF}
+                            className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+                        >
+                            Download as PDF
+                        </button>
+                        <button
+                            onClick={copyHtmlToClipboard}
+                            className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+                        >
+                            Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+export default InputForm;

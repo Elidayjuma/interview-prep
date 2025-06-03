@@ -17,7 +17,7 @@ export default function DefaultLayout({
             <div className="flex">
                 {/* <!-- ===== Sidebar Start ===== --> */}
                 <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                <Script defer data-domain="app.tosomewherelogistics.africa" src="https://analytics.elidayjuma.com/js/script.js" />
+                <Script defer data-domain="interviewprep.elidayjuma.com" src="https://analytics.elidayjuma.com/js/script.js" />
 
                 {/* <!-- ===== Sidebar End ===== --> */}
 

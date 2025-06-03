@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { siteDetails } from '@/data/siteDetails';
+import { FaQuora } from 'react-icons/fa6';
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
@@ -37,13 +38,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
           <Link href="/">
-            <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo.png"}
-              alt="Logo"
-              priority
-            />
+            <FaQuora className="text-primary text-foreground min-w-fit w-8 h-8" />
+            <span className="manrope text-xl font-semibold text-foreground text-primary cursor-pointer">
+              {siteDetails.siteName}
+            </span>
           </Link>
 
           <button

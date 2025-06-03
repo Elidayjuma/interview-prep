@@ -1,9 +1,10 @@
 import Link from "next/link";
 import DarkModeSwitcher from "./DarkModeSwitcher";
-import DropdownMessage from "./DropdownMessage";
 import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
-import Image from "next/image";
+import { FaQuora } from 'react-icons/fa6';
+import { siteDetails } from '@/data/siteDetails';
+
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
@@ -52,12 +53,11 @@ const Header = (props: {
           {/* <!-- Hamburger Toggle BTN --> */}
 
           <Link className="block flex-shrink-0 lg:hidden" href="/">
-            <Image
-              width={32}
-              height={32}
-              src={"/images/logo/logo.png"}
-              alt="Logo"
-            />
+
+            <FaQuora className="text-primary text-foreground min-w-fit w-7 h-7" />
+            <span className="manrope text-xl font-semibold text-foreground text-primary cursor-pointer">
+              {siteDetails.siteName}
+            </span>
           </Link>
         </div>
 
@@ -107,9 +107,6 @@ const Header = (props: {
             <DropdownNotification />
             {/* <!-- Notification Menu Area --> */}
 
-            {/* <!-- Chat Notification Area --> */}
-            {/* <DropdownMessage /> */}
-            {/* <!-- Chat Notification Area --> */}
           </ul>
 
           {/* <!-- User Area --> */}
