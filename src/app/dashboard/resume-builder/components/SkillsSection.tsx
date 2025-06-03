@@ -1,23 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPlus, FaTrash, FaPenToSquare } from "react-icons/fa6";
+import { upsertSkill, deleteSkill, returnLogedIUser } from "@/actions/actions";
 
 type Skill = {
     id: number;
     name: string;
 };
 
-const initialSkills: Skill[] = [
-    { id: 1, name: "Power BI" },
-    { id: 2, name: "SQL" },
-    { id: 3, name: "Excel" },
-    { id: 4, name: "Python" },
-];
 
 const SkillsSection = () => {
-    const [skills, setSkills] = useState<Skill[]>(initialSkills);
+    const [skills, setSkills] = useState<Skill[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [input, setInput] = useState("");
     const [adding, setAdding] = useState(false);
+
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            let user: any = window.localStorage.getItem("user")
+            user = JSON.parse(user)
+            setUser(user);
+            setSkills(user?.skills || []);
+        };
+        fetchUser();
+    }, []);
 
     const handleAdd = () => {
         setInput("");
@@ -31,16 +38,26 @@ const SkillsSection = () => {
         setAdding(false);
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (adding) {
-            setSkills([...skills, { id: Date.now(), name: input }]);
-            setAdding(false);
-        } else if (editingId !== null) {
-            setSkills(skills.map((s) => (s.id === editingId ? { ...s, name: input } : s)));
-            setEditingId(null);
+        try {
+            if (adding) {
+                const upserted = await upsertSkill({ name: input });
+                setSkills([...skills, upserted]);
+                setAdding(false);
+            } else if (editingId !== null) {
+                const upserted = await upsertSkill({ id: editingId, name: input });
+                setSkills(skills.map((s) => (s.id === editingId ? upserted : s)));
+                setEditingId(null);
+            }
+            setInput("");
+            // Optionally update user in localStorage
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (error) {
+            alert("Failed to save skill.");
+            console.error(error);
         }
-        setInput("");
     };
 
     const handleCancel = () => {
@@ -49,10 +66,18 @@ const SkillsSection = () => {
         setInput("");
     };
 
-    const handleDelete = (id: number) => {
-        setSkills(skills.filter((s) => s.id !== id));
-    };
 
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteSkill(id);
+            setSkills(skills.filter((s) => s.id !== id));
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (error) {
+            alert("Failed to delete education.");
+            console.error(error);
+        }
+    };
     return (
         <section>
             <div className="flex items-center mb-2 gap-2">

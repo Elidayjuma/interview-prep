@@ -1,22 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPenToSquare } from "react-icons/fa6";
+import { upsertUserDetail, returnLogedIUser } from "@/actions/actions";
 
 // Dummy initial user detail data (replace with real data from API/db)
 const initialUserDetail = {
-    careerTitle: "Senior Data Analyst",
-    professionalSummary:
-        "Experienced Data Analyst with 5+ years in the tech industry. Skilled in Power BI, SQL, and Excel. Passionate about transforming data into actionable insights.",
-    phoneNumber: "+254 700 123456",
-    linkedinUrl: "https://linkedin.com/in/example",
-    githubUrl: "https://github.com/example",
-    portfolioUrl: "https://portfolio.example.com",
-    twitterUrl: "https://twitter.com/example",
+    careerTitle: "",
+    professionalSummary: "",
+    phoneNumber: "",
+    linkedinUrl: "",
+    githubUrl: "",
+    portfolioUrl: "",
+    twitterUrl: "",
 };
 
 const ProffessionalSummarySection = () => {
     const [editing, setEditing] = useState(false);
     const [userDetail, setUserDetail] = useState(initialUserDetail);
     const [form, setForm] = useState(initialUserDetail);
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            // setPageLoading(true);
+            let user: any = window.localStorage.getItem("user")
+            user = JSON.parse(user)
+            setUser(user);
+            setUserDetail(user?.userDetail || initialUserDetail);
+        };
+        fetchUser();
+    }, []);
 
     const handleEdit = () => {
         setForm(userDetail);
@@ -27,11 +39,25 @@ const ProffessionalSummarySection = () => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setUserDetail(form);
-        setEditing(false);
-        // Here you would also update the backend via an API call
+        if (!user?.id) {
+            alert("User not found");
+            return;
+        }
+        try {
+            await upsertUserDetail({
+                userId: user.id,
+                ...form,
+            });
+            setUserDetail(form);
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+            setEditing(false);
+        } catch (error) {
+            // handle error (e.g., show a message)
+            console.error(error);
+        }
     };
 
     return (

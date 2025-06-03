@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPenToSquare, FaPlus, FaTrash } from "react-icons/fa6";
+import { upsertEducation, deleteEducation, returnLogedIUser } from "@/actions/actions";
 
 type Education = {
     id: number;
@@ -12,31 +13,17 @@ type Education = {
     description?: string;
 };
 
-const initialEducation: Education[] = [
-    {
-        id: 1,
-        institution: "University of Nairobi",
-        degree: "BSc Computer Science",
-        fieldOfStudy: "Computer Science",
-        startDate: "2015-09-01",
-        endDate: "2019-06-30",
-        grade: "First Class",
-        description: "Focused on software engineering and data analysis.",
-    },
-    {
-        id: 2,
-        institution: "Coursera",
-        degree: "Diploma in Data Analytics",
-        fieldOfStudy: "Data Analytics",
-        startDate: "2020-01-01",
-        endDate: "2020-12-31",
-        grade: "Distinction",
-        description: "Completed online with a focus on Power BI and SQL.",
-    },
-];
+function formatDate(dateStr?: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
 
 const EducationSection = () => {
-    const [education, setEducation] = useState<Education[]>(initialEducation);
+    const [education, setEducation] = useState<Education[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState<Education>({
         id: 0,
@@ -49,6 +36,17 @@ const EducationSection = () => {
         description: "",
     });
     const [adding, setAdding] = useState(false);
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            let user: any = window.localStorage.getItem("user")
+            user = JSON.parse(user)
+            setUser(user);
+            setEducation(user?.educations || []);
+        };
+        fetchUser();
+    }, []);
 
     const handleEdit = (edu: Education) => {
         setForm(edu);
@@ -75,27 +73,62 @@ const EducationSection = () => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (adding) {
-            setEducation([...education, form]);
-            setAdding(false);
-        } else if (editingId !== null) {
-            setEducation(
-                education.map((edu) => (edu.id === editingId ? form : edu))
-            );
-            setEditingId(null);
+        if (!user?.id) {
+            alert("User not found");
+            return;
         }
-        setForm({
-            id: 0,
-            institution: "",
-            degree: "",
-            fieldOfStudy: "",
-            startDate: "",
-            endDate: "",
-            grade: "",
-            description: "",
-        });
+        try {
+            const upserted = await upsertEducation({
+                ...form,
+                userId: user.id,
+            });
+
+            if (adding) {
+                setEducation([
+                    ...education,
+                    {
+                        ...upserted,
+                        startDate: upserted.startDate ? new Date(upserted.startDate).toISOString().slice(0, 10) : "",
+                        endDate: upserted.endDate ? new Date(upserted.endDate).toISOString().slice(0, 10) : "",
+                        grade: upserted.grade ?? "",
+                        description: upserted.description ?? "",
+                    }
+                ]);
+                setAdding(false);
+            } else if (editingId !== null) {
+                setEducation(
+                    education.map((edu) =>
+                        edu.id === upserted.id
+                            ? {
+                                ...upserted,
+                                startDate: upserted.startDate ? new Date(upserted.startDate).toISOString().slice(0, 10) : "",
+                                endDate: upserted.endDate ? new Date(upserted.endDate).toISOString().slice(0, 10) : "",
+                                grade: upserted.grade ?? "",
+                                description: upserted.description ?? "",
+                            }
+                            : edu
+                    )
+                );
+                setEditingId(null);
+            }
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+            setForm({
+                id: 0,
+                institution: "",
+                degree: "",
+                fieldOfStudy: "",
+                startDate: "",
+                endDate: "",
+                grade: "",
+                description: "",
+            });
+        } catch (error) {
+            alert("Failed to save education.");
+            console.error(error);
+        }
     };
 
     const handleCancel = () => {
@@ -113,8 +146,16 @@ const EducationSection = () => {
         });
     };
 
-    const handleDelete = (id: number) => {
-        setEducation(education.filter((edu) => edu.id !== id));
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteEducation(id);
+            setEducation(education.filter((edu) => edu.id !== id));
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (error) {
+            alert("Failed to delete education.");
+            console.error(error);
+        }
     };
 
     return (
@@ -131,7 +172,7 @@ const EducationSection = () => {
                 </button>
             </div>
             <ul className="mb-4">
-                {education.map((edu) =>
+                {education?.map((edu) =>
                     editingId === edu.id ? (
                         <li key={edu.id} className="mb-2">
                             <form onSubmit={handleSave} className="flex flex-col gap-2">
@@ -215,7 +256,7 @@ const EducationSection = () => {
                         <li key={edu.id} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                             <span>
                                 <strong>{edu.degree}</strong>, {edu.institution} ({edu.fieldOfStudy})<br />
-                                {edu.startDate} - {edu.endDate || "Present"}
+                                {formatDate(edu.startDate)} - {formatDate(edu.endDate) || "Present"}
                                 {edu.grade && <> | Grade: {edu.grade}</>}
                                 {edu.description && <><br />{edu.description}</>}
                             </span>

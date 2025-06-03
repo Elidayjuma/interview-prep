@@ -23,7 +23,7 @@ export default function ResumeBuilder() {
     return (
         <DashLayout>
             <div className="max-w-4xl mx-auto py-8 px-2 sm:px-4">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Resume Builder</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Resume Builder (We start here)</h2>
                 <div className="mb-6 flex flex-wrap sm:flex-nowrap justify-center gap-2 overflow-x-auto">
                     {tabs.map((tab, idx) => (
                         <button

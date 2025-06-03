@@ -21,6 +21,8 @@ model User {
   experiences Experience[]
   skills      Skill[]      @relation("UserSkills")
   tools       Tool[]       @relation("UserTools")
+  Hobby       Hobby[]      @relation("UserHobbies")
+  hobbyId     Int?
 }
 
 model UserDetail {
@@ -79,6 +81,13 @@ model Tool {
   name String @unique
 
   users User[] @relation("UserTools")
+}
+
+model Hobby {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  users User[] @relation("UserHobbies")
 }
 
 model Experience {

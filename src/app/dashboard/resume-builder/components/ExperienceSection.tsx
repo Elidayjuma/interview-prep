@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPenToSquare, FaPlus, FaTrash } from "react-icons/fa6";
+import { upsertExperience, deleteExperience, returnLogedIUser } from "@/actions/actions";
+
 
 type Experience = {
     id: number;
@@ -11,34 +13,18 @@ type Experience = {
     location?: string;
 };
 
-const initialExperience: Experience[] = [
-    {
-        id: 1,
-        company: "TechCorp",
-        position: "Data Analyst",
-        startDate: "2021-01-01",
-        endDate: "",
-        responsibilities: [
-            "Developed dashboards in Power BI for sales and marketing teams.",
-            "Automated reporting processes, reducing manual work by 30%."
-        ],
-        location: "Nairobi, Kenya"
-    },
-    {
-        id: 2,
-        company: "DataWorks",
-        position: "Junior Analyst",
-        startDate: "2019-01-01",
-        endDate: "2021-01-01",
-        responsibilities: [
-            "Supported data cleaning and ETL operations for client projects."
-        ],
-        location: "Remote"
-    }
-];
+function formatDate(dateStr?: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
 
 const ExperienceSection = () => {
-    const [experience, setExperience] = useState<Experience[]>(initialExperience);
+    const [experience, setExperience] = useState<Experience[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [adding, setAdding] = useState(false);
     const [form, setForm] = useState<Experience>({
@@ -50,6 +36,17 @@ const ExperienceSection = () => {
         responsibilities: [""],
         location: ""
     });
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            let user: any = window.localStorage.getItem("user")
+            user = JSON.parse(user)
+            setUser(user);
+            setExperience(user?.experiences || []);
+        };
+        fetchUser();
+    }, []);
 
     const handleEdit = (exp: Experience) => {
         setForm({ ...exp, responsibilities: [...exp.responsibilities] });
@@ -90,26 +87,72 @@ const ExperienceSection = () => {
         setForm({ ...form, responsibilities: updated });
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (adding) {
-            setExperience([...experience, form]);
-            setAdding(false);
-        } else if (editingId !== null) {
-            setExperience(
-                experience.map((exp) => (exp.id === editingId ? form : exp))
-            );
-            setEditingId(null);
+        if (!user?.id) {
+            alert("User not found");
+            return;
         }
-        setForm({
-            id: 0,
-            company: "",
-            position: "",
-            startDate: "",
-            endDate: "",
-            responsibilities: [""],
-            location: ""
-        });
+        try {
+            const upserted: any = await upsertExperience({
+                ...form,
+                userId: user.id,
+                // Prisma expects responsibilities as JSON, so pass as array
+                responsibilities: form.responsibilities,
+                startDate: form.startDate,
+                endDate: form.endDate || undefined,
+            });
+            if (adding) {
+                setExperience([
+                    ...experience,
+                    {
+                        ...upserted,
+                        startDate: upserted.startDate ? new Date(upserted.startDate).toISOString().slice(0, 10) : "",
+                        endDate: upserted.endDate ? new Date(upserted.endDate).toISOString().slice(0, 10) : "",
+                        responsibilities: Array.isArray(upserted.responsibilities)
+                            ? upserted.responsibilities.filter((r: any): r is string => typeof r === "string" && r !== null)
+                            : [],
+                        location: upserted.location ?? undefined
+                    },
+                ]);
+                setAdding(false);
+            } else if (editingId !== null) {
+                setExperience(
+                    experience.map((exp) =>
+                        exp.id === upserted.id
+                            ? {
+                                ...upserted,
+                                startDate: upserted.startDate
+                                    ? new Date(upserted.startDate).toISOString().slice(0, 10)
+                                    : "",
+                                endDate: upserted.endDate
+                                    ? new Date(upserted.endDate).toISOString().slice(0, 10)
+                                    : "",
+                                responsibilities: Array.isArray(upserted.responsibilities)
+                                    ? upserted.responsibilities.filter((r: any): r is string => typeof r === "string" && r !== null)
+                                    : [],
+                                location: upserted.location ?? undefined
+                            }
+                            : exp
+                    )
+                );
+                setEditingId(null);
+            }
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+            setForm({
+                id: 0,
+                company: "",
+                position: "",
+                startDate: "",
+                endDate: "",
+                responsibilities: [""],
+                location: "",
+            });
+        } catch (error) {
+            alert("Failed to save experience.");
+            console.error(error);
+        }
     };
 
     const handleCancel = () => {
@@ -126,8 +169,16 @@ const ExperienceSection = () => {
         });
     };
 
-    const handleDelete = (id: number) => {
-        setExperience(experience.filter((exp) => exp.id !== id));
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteExperience(id);
+            setExperience(experience.filter((exp) => exp.id !== id));
+            const updatedUser = await returnLogedIUser();
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (error) {
+            alert("Failed to delete education.");
+            console.error(error);
+        }
     };
 
     return (
@@ -241,8 +292,9 @@ const ExperienceSection = () => {
                     ) : (
                         <li key={exp.id} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                             <span>
-                                <strong>{exp.position}</strong> at {exp.company} ({exp.startDate} - {exp.endDate || "Present"})
+                                <strong>{exp.position}</strong> at {exp.company} ({formatDate(exp.startDate)} - {formatDate(exp.endDate) || "Present"})
                                 {exp.location && <> | {exp.location}</>}
+                                <p><strong>Roles:</strong></p>
                                 <ul className="list-disc ml-6">
                                     {exp.responsibilities.map((r, i) => (
                                         <li key={i}>{r}</li>
