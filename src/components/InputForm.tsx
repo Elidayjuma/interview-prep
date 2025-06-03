@@ -16,7 +16,7 @@ const InputForm: React.FC = () => {
     const [description, setDescription] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>("");
-    const [noOfQuestions, setNoOfQuestions] = useState<string>("");
+    const [noOfQuestions, setNoOfQuestions] = useState<string>("5");
     const [makeTechnical, setMakeTechnical] = useState(false);
     const [questions, setQuestions] = useState<InterviewQA[]>([]);
     const [descWarning, setDescWarning] = useState(false);
@@ -86,7 +86,6 @@ const InputForm: React.FC = () => {
                                 max={20}
                                 placeholder="e.g., 10 "
                                 onChange={(e) => setNoOfQuestions(e.target.value)}
-                                defaultValue={5}
                                 className="w-full p-3 border border-gray-300 rounded-lg text-sm"
                             />
                         </div>

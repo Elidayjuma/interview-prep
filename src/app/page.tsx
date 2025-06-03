@@ -3,10 +3,11 @@ import FAQ from "@/components/FAQ";
 import Container from "@/components/Container";
 import CTA from "@/components/CTA";
 import FeatureCards from "@/components/FeaturedCards";
+import WebLayout from "@/components/Layouts/WebLayout";
 
 const HomePage: React.FC = () => {
   return (
-    <>
+    <WebLayout>
       <Hero />
       <FeatureCards />
       <Container>
@@ -15,7 +16,7 @@ const HomePage: React.FC = () => {
 
         <CTA />
       </Container>
-    </>
+    </WebLayout>
   );
 };
 

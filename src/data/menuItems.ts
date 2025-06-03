@@ -13,9 +13,9 @@ export const menuItems: IMenuItem[] = [
         text: "Tailor my CV",
         url: "/Cv"
     },
-    {
-        text: "By ElidayJuma.com",
-        url: "https://elidayjuma.com"
-    },
+    // {
+    //     text: "By ElidayJuma.com",
+    //     url: "https://elidayjuma.com"
+    // },
     
 ]; 

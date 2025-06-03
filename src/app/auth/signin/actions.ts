@@ -54,7 +54,7 @@ export async function login(prevState: any, formData: FormData) {
 
   await createSession(testUser.id.toString(), testUser.name || "Update name", testUser.email);
 
-  redirect("/home");
+  redirect("/dashboard");
 }
 
 export async function logout() {
