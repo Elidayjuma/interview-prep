@@ -2,6 +2,7 @@
 
 import React, { useState, ChangeEvent, useRef } from "react";
 import { generateCustomCv } from "@/actions/generate_custom_cv";
+import { generateCoverLetter } from "@/actions/generate_cover_letter";
 import ReactMarkdown from "react-markdown";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -11,8 +12,8 @@ const InputForm: React.FC = () => {
     const WARNING_THRESHOLD = 4800;
 
     const [description, setDescription] = useState<string>("");
-    const [cv, setCv] = useState<string>("");
     const [customCv, setCustomCv] = useState<string>("");
+    const [customCoverLetter, setCustomCoverLetter] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>("");
     const [descWarning, setDescWarning] = useState(false);
@@ -25,70 +26,96 @@ const InputForm: React.FC = () => {
         setDescWarning(input.length >= WARNING_THRESHOLD);
     };
 
-    const handleCvChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        const input = e.target.value.slice(0, CHAR_LIMIT);
-        setCv(input);
-        setDescWarning(input.length >= WARNING_THRESHOLD);
-    };
-
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         setError("");
         setLoading(true);
 
-        if (!description.trim()) {
-            setError("Please enter the job description.");
-            setLoading(false);
-            return;
-        }
-
-        const customCvfromActions = await generateCustomCv(description, cv);
-        if (!customCvfromActions) {
-            setError("Failed to generate custom CV. Try again.");
-        } else {
-            setCustomCv(customCvfromActions);
-        }
-        setLoading(false);
-    };
-
-    const downloadPDF = async () => {
-        if (!pdfRef.current) return;
-
-        const canvas = await html2canvas(pdfRef.current, {
-            scale: 2, // Higher quality
-        });
-
-        const imgData = canvas.toDataURL("image/png");
-
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgWidth = pdfWidth;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-        let position = 0;
-
-        // If content is longer than one page, slice it
-        if (imgHeight <= pdfHeight) {
-            pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        } else {
-            while (position < imgHeight) {
-                pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
-                position += pdfHeight;
-                if (position < imgHeight) {
-                    pdf.addPage();
-                }
+        try {
+            if (!description.trim()) {
+                setError("Please enter the job description.");
+                return;
             }
-        }
 
-        pdf.save("custom_cv.pdf");
+            // Always fetch the latest user data
+            let user: any = window.localStorage.getItem("user");
+            user = JSON.parse(user);
+
+            if (!user) {
+                setError("User data not found. Please complete your resume first.");
+                return;
+            }
+
+            // Shape the user object to look like a CV
+            const cvUser = {
+                name: user.name,
+                email: user.email,
+                phone: user.userDetail?.phoneNumber,
+                careerTitle: user.userDetail?.careerTitle,
+                professionalSummary: user.userDetail?.professionalSummary,
+                linkedin: user.userDetail?.linkedinUrl,
+                github: user.userDetail?.githubUrl,
+                portfolio: user.userDetail?.portfolioUrl,
+                twitter: user.userDetail?.twitterUrl,
+                education: user.educations?.map((edu: any) => ({
+                    institution: edu.institution,
+                    degree: edu.degree,
+                    fieldOfStudy: edu.fieldOfStudy,
+                    startDate: edu.startDate,
+                    endDate: edu.endDate,
+                    grade: edu.grade,
+                    description: edu.description,
+                })),
+                experience: user.experiences?.map((exp: any) => ({
+                    company: exp.company,
+                    position: exp.position,
+                    startDate: exp.startDate,
+                    endDate: exp.endDate,
+                    responsibilities: exp.responsibilities,
+                    location: exp.location,
+                })),
+                skills: user.skills?.map((s: any) => s.name),
+                tools: user.tools?.map((t: any) => t.name),
+                hobbies: user.Hobby?.map((h: any) => h.name),
+            };
+
+            const userContext = `
+                Name: ${cvUser.name}
+                Email: ${cvUser.email}
+                Phone: ${cvUser.phone}
+                Career Title: ${cvUser.careerTitle}
+                Professional Summary: ${cvUser.professionalSummary}
+                LinkedIn: ${cvUser.linkedin}
+                GitHub: ${cvUser.github}
+                Portfolio: ${cvUser.portfolio}
+                Twitter: ${cvUser.twitter}
+                Education: ${cvUser.education?.map((e: any) => `${e.degree} in ${e.fieldOfStudy} at ${e.institution} (${e.startDate} - ${e.endDate})`).join("; ")}
+                Experience: ${cvUser.experience?.map((e: any) => `${e.position} at ${e.company} (${e.startDate} - ${e.endDate})`).join("; ")}
+                Skills: ${cvUser.skills?.join(", ")}
+                Tools: ${cvUser.tools?.join(", ")}
+                Hobbies: ${cvUser.hobbies?.join(", ")}
+                `;
+
+            // Pass the shaped user object as the CV context
+            const customCvfromActions = await generateCustomCv(description, userContext);
+            const customCoverLetterFromActions = await generateCoverLetter(description, userContext);
+
+            if (!customCvfromActions) {
+                setError("Failed to generate custom CV. Try again.");
+            } else {
+                setCustomCv(customCvfromActions);
+                setCustomCoverLetter(customCoverLetterFromActions);
+            }
+        } catch (err) {
+            setError("An unexpected error occurred. Please try again.");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-
-    const copyHtmlToClipboard = async () => {
-        const el = document.getElementById("cv-content");
+    const copyHtmlToClipboard = async (id = "cv-content") => {
+        const el = document.getElementById(id);
         if (!el) return;
 
         const blob = new Blob([el.innerHTML], { type: "text/html" });
@@ -96,7 +123,7 @@ const InputForm: React.FC = () => {
 
         try {
             await navigator.clipboard.write(data);
-            alert("CV copied with formatting! Paste into Word.");
+            alert("Content copied with formatting! Paste into Word.");
         } catch (err) {
             console.error("Copy failed", err);
             alert("Failed to copy CV.");
@@ -153,14 +180,29 @@ const InputForm: React.FC = () => {
                         <ReactMarkdown>{customCv}</ReactMarkdown>
                     </div>
                     <div className="mt-4 flex justify-center gap-3">
+
                         <button
-                            onClick={downloadPDF}
-                            className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
+                            onClick={() => copyHtmlToClipboard("cv-content")}
+                            className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
                         >
-                            Download as PDF
+                            Copy to Clipboard
                         </button>
+                    </div>
+                </div>
+            )}
+            {/* Custom Cover Letter Output */}
+            {customCoverLetter && (
+                <div className="mx-auto max-w-4xl p-4 mt-10">
+                    <h3 className="text-xl font-semibold mb-4">Your Custom Cover Letter:</h3>
+                    <div
+                        id="cover-letter-content" // <-- set a unique id here
+                        className="bg-white border border-gray-300 rounded-lg p-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-800"
+                    >
+                        <ReactMarkdown>{customCoverLetter}</ReactMarkdown>
+                    </div>
+                    <div className="mt-4 flex justify-center gap-3">
                         <button
-                            onClick={copyHtmlToClipboard}
+                            onClick={() => copyHtmlToClipboard("cover-letter-content")}
                             className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
                         >
                             Copy to Clipboard

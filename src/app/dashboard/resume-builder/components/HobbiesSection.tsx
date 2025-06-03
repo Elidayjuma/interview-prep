@@ -1,133 +1,103 @@
-import { useState } from "react";
-import { FaPlus, FaTrash, FaPenToSquare } from "react-icons/fa6";
+import { useEffect, useState } from "react";
+import { findHobbiesByName, addHobbyToUser, disconnectHobbyFromUser, returnLogedIUser } from "@/actions/actions";
+import { FaPlus, FaTrash } from "react-icons/fa6";
 
-type Hobby = {
-    id: number;
-    name: string;
-};
-
-const initialHobbies: Hobby[] = [
-    { id: 1, name: "Cycling" },
-    { id: 2, name: "Photography" },
-    { id: 3, name: "Chess" },
-];
+type Hobby = { id: number; name: string; };
 
 const HobbiesSection = () => {
-    const [hobbies, setHobbies] = useState<Hobby[]>(initialHobbies);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [hobbies, setHobbies] = useState<Hobby[]>([]);
     const [input, setInput] = useState("");
-    const [adding, setAdding] = useState(false);
+    const [suggestions, setSuggestions] = useState<Hobby[]>([]);
+    const [user, setUser] = useState<any>(null);
 
-    const handleAdd = () => {
-        setInput("");
-        setAdding(true);
-        setEditingId(null);
-    };
+    useEffect(() => {
+        const fetchUser = async () => {
+            let user: any = window.localStorage.getItem("user");
+            user = JSON.parse(user);
+            setUser(user);
+            setHobbies(user?.Hobby || []);
+        };
+        fetchUser();
+    }, []);
 
-    const handleEdit = (hobby: Hobby) => {
-        setInput(hobby.name);
-        setEditingId(hobby.id);
-        setAdding(false);
-    };
-
-    const handleSave = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (adding) {
-            setHobbies([...hobbies, { id: Date.now(), name: input }]);
-            setAdding(false);
-        } else if (editingId !== null) {
-            setHobbies(hobbies.map((h) => (h.id === editingId ? { ...h, name: input } : h)));
-            setEditingId(null);
+    // Autocomplete suggestions
+    useEffect(() => {
+        if (input.length > 0) {
+            findHobbiesByName(input).then(setSuggestions);
+        } else {
+            setSuggestions([]);
         }
+    }, [input]);
+
+    const handleAddHobby = async (hobbyName: string) => {
+        if (!user?.id) return;
+        const hobby = await addHobbyToUser(user.id, hobbyName);
+        setHobbies((prev) => [...prev, hobby]);
         setInput("");
+        setSuggestions([]);
+        const updatedUser = await returnLogedIUser();
+        window.localStorage.setItem("user", JSON.stringify(updatedUser));
     };
 
-    const handleCancel = () => {
-        setAdding(false);
-        setEditingId(null);
-        setInput("");
-    };
-
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
+        await disconnectHobbyFromUser(user.id, id);
         setHobbies(hobbies.filter((h) => h.id !== id));
+        const updatedUser = await returnLogedIUser();
+        window.localStorage.setItem("user", JSON.stringify(updatedUser));
     };
 
     return (
         <section>
             <div className="flex items-center mb-2 gap-2">
                 <h2 className="text-xl font-semibold">Hobbies</h2>
-                <button
-                    type="button"
-                    aria-label="Add hobby"
-                    onClick={handleAdd}
-                    className="text-gray-500 hover:text-primary"
-                >
+            </div>
+            <form
+                onSubmit={e => {
+                    e.preventDefault();
+                    if (input.trim()) handleAddHobby(input.trim());
+                }}
+                className="flex gap-2 mb-2"
+            >
+                <input
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    className="border rounded px-2 py-1"
+                    placeholder="Type to search or add hobby"
+                    autoComplete="off"
+                />
+                <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
                     <FaPlus />
                 </button>
-            </div>
-            <ul className="flex flex-wrap gap-2 mb-2">
-                {hobbies.map((hobby) =>
-                    editingId === hobby.id ? (
-                        <li key={hobby.id}>
-                            <form onSubmit={handleSave} className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    className="border rounded px-2 py-1"
-                                    required
-                                    autoFocus
-                                />
-                                <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
-                                    Save
-                                </button>
-                                <button type="button" className="bg-gray-200 px-2 py-1 rounded" onClick={handleCancel}>
-                                    Cancel
-                                </button>
-                            </form>
+            </form>
+            {suggestions.length > 0 && (
+                <ul className="border rounded bg-white absolute z-10">
+                    {suggestions.map(s => (
+                        <li
+                            key={s.id}
+                            className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => handleAddHobby(s.name)}
+                        >
+                            {s.name}
                         </li>
-                    ) : (
-                        <li key={hobby.id} className="bg-gray-200 px-2 py-1 rounded flex items-center gap-1">
-                            {hobby.name}
-                            <button
-                                type="button"
-                                aria-label="Edit"
-                                onClick={() => handleEdit(hobby)}
-                                className="text-gray-500 hover:text-primary ml-1"
-                            >
-                                <FaPenToSquare />
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="Delete"
-                                onClick={() => handleDelete(hobby.id)}
-                                className="text-gray-500 hover:text-red-500 ml-1"
-                            >
-                                <FaTrash />
-                            </button>
-                        </li>
-                    )
-                )}
-            </ul>
-            {adding && (
-                <form onSubmit={handleSave} className="flex gap-2 mb-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        className="border rounded px-2 py-1"
-                        required
-                        autoFocus
-                        placeholder="Hobby name"
-                    />
-                    <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
-                        Add
-                    </button>
-                    <button type="button" className="bg-gray-200 px-2 py-1 rounded" onClick={handleCancel}>
-                        Cancel
-                    </button>
-                </form>
+                    ))}
+                </ul>
             )}
+            <ul className="flex flex-wrap gap-2 mb-2">
+                {hobbies.map(hobby => (
+                    <li key={hobby.id} className="bg-gray-200 px-2 py-1 rounded flex items-center gap-1">
+                        {hobby.name}
+                        <button
+                            type="button"
+                            aria-label="Delete"
+                            onClick={() => handleDelete(hobby.id)}
+                            className="text-gray-500 hover:text-red-500 ml-1"
+                        >
+                            <FaTrash />
+                        </button>
+                    </li>
+                ))}
+            </ul>
         </section>
     );
 };

@@ -7,14 +7,16 @@ import ExperienceSection from "./components/ExperienceSection";
 import SkillsSection from "./components/SkillsSection";
 import ToolsSection from "./components/ToolsSection";
 import HobbiesSection from "./components/HobbiesSection";
+import ResumePreviewSection from "./components/ResumePreviewSection";
 
 const tabs = [
     { label: "Summary", component: <ResumeSummarySection /> },
     { label: "Education", component: <EducationSection /> },
     { label: "Experience", component: <ExperienceSection /> },
-    { label: "Skills", component: <SkillsSection /> },
     { label: "Tools", component: <ToolsSection /> },
+    { label: "Skills", component: <SkillsSection /> },
     { label: "Hobbies", component: <HobbiesSection /> },
+    { label: "Preview", component: <ResumePreviewSection /> },
 ];
 
 export default function ResumeBuilder() {

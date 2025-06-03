@@ -22,7 +22,6 @@ model User {
   skills      Skill[]      @relation("UserSkills")
   tools       Tool[]       @relation("UserTools")
   Hobby       Hobby[]      @relation("UserHobbies")
-  hobbyId     Int?
 }
 
 model UserDetail {

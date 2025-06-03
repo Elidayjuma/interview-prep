@@ -1,134 +1,103 @@
-import { useState } from "react";
-import { FaPlus, FaTrash, FaPenToSquare } from "react-icons/fa6";
+import { useEffect, useState } from "react";
+import { findToolsByName, addToolToUser, disconnectToolFromUser, returnLogedIUser } from "@/actions/actions";
+import { FaPlus, FaTrash } from "react-icons/fa6";
 
-type Tool = {
-    id: number;
-    name: string;
-};
-
-const initialTools: Tool[] = [
-    { id: 1, name: "Tableau" },
-    { id: 2, name: "Jupyter Notebook" },
-    { id: 3, name: "Git" },
-    { id: 4, name: "VS Code" },
-];
+type Tool = { id: number; name: string; };
 
 const ToolsSection = () => {
-    const [tools, setTools] = useState<Tool[]>(initialTools);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [tools, setTools] = useState<Tool[]>([]);
     const [input, setInput] = useState("");
-    const [adding, setAdding] = useState(false);
+    const [suggestions, setSuggestions] = useState<Tool[]>([]);
+    const [user, setUser] = useState<any>(null);
 
-    const handleAdd = () => {
-        setInput("");
-        setAdding(true);
-        setEditingId(null);
-    };
+    useEffect(() => {
+        const fetchUser = async () => {
+            let user: any = window.localStorage.getItem("user");
+            user = JSON.parse(user);
+            setUser(user);
+            setTools(user?.tools || []);
+        };
+        fetchUser();
+    }, []);
 
-    const handleEdit = (tool: Tool) => {
-        setInput(tool.name);
-        setEditingId(tool.id);
-        setAdding(false);
-    };
-
-    const handleSave = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (adding) {
-            setTools([...tools, { id: Date.now(), name: input }]);
-            setAdding(false);
-        } else if (editingId !== null) {
-            setTools(tools.map((t) => (t.id === editingId ? { ...t, name: input } : t)));
-            setEditingId(null);
+    // Autocomplete suggestions
+    useEffect(() => {
+        if (input.length > 0) {
+            findToolsByName(input).then(setSuggestions);
+        } else {
+            setSuggestions([]);
         }
+    }, [input]);
+
+    const handleAddTool = async (toolName: string) => {
+        if (!user?.id) return;
+        const tool = await addToolToUser(user.id, toolName);
+        setTools((prev) => [...prev, tool]);
         setInput("");
+        setSuggestions([]);
+        const updatedUser = await returnLogedIUser();
+        window.localStorage.setItem("user", JSON.stringify(updatedUser));
     };
 
-    const handleCancel = () => {
-        setAdding(false);
-        setEditingId(null);
-        setInput("");
-    };
-
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
+        await disconnectToolFromUser(user.id, id);
         setTools(tools.filter((t) => t.id !== id));
+        const updatedUser = await returnLogedIUser();
+        window.localStorage.setItem("user", JSON.stringify(updatedUser));
     };
 
     return (
         <section>
             <div className="flex items-center mb-2 gap-2">
                 <h2 className="text-xl font-semibold">Tools & Tech Stack</h2>
-                <button
-                    type="button"
-                    aria-label="Add tool"
-                    onClick={handleAdd}
-                    className="text-gray-500 hover:text-primary"
-                >
+            </div>
+            <form
+                onSubmit={e => {
+                    e.preventDefault();
+                    if (input.trim()) handleAddTool(input.trim());
+                }}
+                className="flex gap-2 mb-2"
+            >
+                <input
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    className="border rounded px-2 py-1"
+                    placeholder="Type to search or add tool"
+                    autoComplete="off"
+                />
+                <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
                     <FaPlus />
                 </button>
-            </div>
-            <ul className="flex flex-wrap gap-2 mb-2">
-                {tools.map((tool) =>
-                    editingId === tool.id ? (
-                        <li key={tool.id}>
-                            <form onSubmit={handleSave} className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    className="border rounded px-2 py-1"
-                                    required
-                                    autoFocus
-                                />
-                                <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
-                                    Save
-                                </button>
-                                <button type="button" className="bg-gray-200 px-2 py-1 rounded" onClick={handleCancel}>
-                                    Cancel
-                                </button>
-                            </form>
+            </form>
+            {suggestions.length > 0 && (
+                <ul className="border rounded bg-white absolute z-10">
+                    {suggestions.map(s => (
+                        <li
+                            key={s.id}
+                            className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => handleAddTool(s.name)}
+                        >
+                            {s.name}
                         </li>
-                    ) : (
-                        <li key={tool.id} className="bg-gray-200 px-2 py-1 rounded flex items-center gap-1">
-                            {tool.name}
-                            <button
-                                type="button"
-                                aria-label="Edit"
-                                onClick={() => handleEdit(tool)}
-                                className="text-gray-500 hover:text-primary ml-1"
-                            >
-                                <FaPenToSquare />
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="Delete"
-                                onClick={() => handleDelete(tool.id)}
-                                className="text-gray-500 hover:text-red-500 ml-1"
-                            >
-                                <FaTrash />
-                            </button>
-                        </li>
-                    )
-                )}
-            </ul>
-            {adding && (
-                <form onSubmit={handleSave} className="flex gap-2 mb-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        className="border rounded px-2 py-1"
-                        required
-                        autoFocus
-                        placeholder="Tool name"
-                    />
-                    <button type="submit" className="bg-primary text-white px-2 py-1 rounded">
-                        Add
-                    </button>
-                    <button type="button" className="bg-gray-200 px-2 py-1 rounded" onClick={handleCancel}>
-                        Cancel
-                    </button>
-                </form>
+                    ))}
+                </ul>
             )}
+            <ul className="flex flex-wrap gap-2 mb-2">
+                {tools.map(tool => (
+                    <li key={tool.id} className="bg-gray-200 px-2 py-1 rounded flex items-center gap-1">
+                        {tool.name}
+                        <button
+                            type="button"
+                            aria-label="Delete"
+                            onClick={() => handleDelete(tool.id)}
+                            className="text-gray-500 hover:text-red-500 ml-1"
+                        >
+                            <FaTrash />
+                        </button>
+                    </li>
+                ))}
+            </ul>
         </section>
     );
 };
