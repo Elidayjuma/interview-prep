@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import ClickOutside from "@/components/ClickOutside";
-import { getUnreadNotifications, markNotificationsAsRead } from "@/actions/actions";
+// import { getUnreadNotifications, markNotificationsAsRead } from "@/actions/actions";
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -14,11 +14,11 @@ const DropdownNotification = () => {
       if (!userStr) return;
       const user = JSON.parse(userStr);
       if (!user?.id) return;
-      const notes = await getUnreadNotifications(user.id);
-      if (notes.length > 0) {
-        setNotifying(true);
-      }
-      setUnreadNotifications(notes);
+      // const notes = await getUnreadNotifications(user.id);
+      // if (notes.length > 0) {
+      //   setNotifying(true);
+      // }
+      // setUnreadNotifications(notes);
     };
     fetchNotifications();
   }, []);
@@ -29,7 +29,7 @@ const DropdownNotification = () => {
     if (!userStr) return;
     const user = JSON.parse(userStr);
     if (!user?.id) return;
-    await markNotificationsAsRead(user.id, notificationId);
+    // await markNotificationsAsRead(user.id, notificationId);
     // Remove the notification from the list in UI
     setUnreadNotifications((prev) =>
       prev.filter((note) => note.id !== notificationId)
@@ -97,7 +97,7 @@ const DropdownNotification = () => {
                         {new Date(note.createdAt).toLocaleDateString()}
                         <button
                           className="text-xs text-blue-600 hover:underline"
-                          onClick={() => handleMarkAsRead(note.id)}
+                        // onClick={() => handleMarkAsRead(note.id)}
                         >
                           Mark as Read
                         </button>
