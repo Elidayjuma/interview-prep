@@ -22,7 +22,7 @@ export const footerDetails: {
             url: "https://elidayjuma.com/startup-resources/"
         },
     ],
-    email: 'elidayjuma@gmail.com',
+    email: 'ej@elidayjuma.com',
     telephone: 'not today',
     socials: {
         // github: 'https://github.com',

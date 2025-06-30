@@ -12,6 +12,9 @@ export const menuItems: IMenuItem[] = [
     {
         text: "Tailor my CV",
         url: "/Cv"
+    },{
+        text: "Interview Prep",
+        url: "/InterviewPrep"
     },
     // {
     //     text: "By ElidayJuma.com",
