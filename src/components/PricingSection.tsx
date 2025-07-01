@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 const PricingSection = () => {
     const router = useRouter();
 
-    const handleClick = () => {
-        router.push("/auth/signup");
+    const handleClick = (link: string) => {
+        router.push(link);
     };
 
     return (
@@ -23,10 +23,19 @@ const PricingSection = () => {
                             key={tier.name}
                             className="bg-white rounded-lg shadow p-6 flex flex-col items-center"
                         >
-                            <h3 className="text-xl font-semibold mb-2">{tier.name}</h3>
+                            <h3 className="text-xl font-semibold mb-2">
+                                {tier.name}
+                                {tier.name === "Pro" && (
+                                    <span className="ml-2 text-sm bg-black text-primary"></span>
+                                )}
+                            </h3>
                             <div className="text-3xl font-bold mb-4">
                                 {tier.price === 0 ? "Free" : `$${tier.price}`}
-                                {tier.name === "Pro" ? <span className="text-base font-normal">/year</span> : tier.name === "Starter" ? <span className="text-base font-normal">/month</span> : null}
+                                {tier.name === "Pro" ? (
+                                    <span className="text-base font-normal">/year <sub className="text-primary bg-black text-sm">Best value</sub></span>
+                                ) : tier.name === "Starter" ? (
+                                    <span className="text-base font-normal">/month</span>
+                                ) : null}
                             </div>
                             <ul className="mb-6 space-y-2 w-full">
                                 {tier.features.map((feature: any) => (
@@ -37,7 +46,7 @@ const PricingSection = () => {
                             </ul>
                             <div className="w-full mt-auto">
                                 <button
-                                    onClick={handleClick}
+                                    onClick={() => handleClick(tier.link)}
                                     className={`w-full py-2 rounded font-semibold ${tier.name === "Pro"
                                         ? "bg-primary text-white"
                                         : "bg-primary text-white"

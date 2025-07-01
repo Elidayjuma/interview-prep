@@ -10,6 +10,7 @@ export const tiers: IPricing[] = [
             'CV & cover letter generation',
             'Interview Q&A generation',
         ],
+        link: 'https://interviewprep.elidayjuma.com/dashboard'
     },
     {
         name: 'Starter',
@@ -20,6 +21,7 @@ export const tiers: IPricing[] = [
             'CV & cover letter generation',
             'Interview Q&A generation',
         ],
+        link: 'https://paystack.shop/pay/interviewprep_starter'
     },
     {
         name: 'Pro',
@@ -31,5 +33,6 @@ export const tiers: IPricing[] = [
             'CV & cover letter generation',
             'Interview Q&A generation',
         ],
+        link: 'https://paystack.shop/pay/interviewprep_pro'
     },
 ];
