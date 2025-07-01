@@ -26,7 +26,7 @@ const PricingSection = () => {
                             <h3 className="text-xl font-semibold mb-2">
                                 {tier.name}
                                 {tier.name === "Pro" && (
-                                    <span className="ml-2 text-sm bg-black text-primary"></span>
+                                    <span className="ml-2 text-sm bg-black text-primary"> </span>
                                 )}
                             </h3>
                             <div className="text-3xl font-bold mb-4">
