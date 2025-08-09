@@ -105,6 +105,44 @@ model Experience {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// ===== Jobs Board (MVP) =====
+
+enum JobSourceType {
+  GREENHOUSE
+  REMOTE_OK
+}
+
+enum JobStatus {
+  ACTIVE
+  EXPIRED
+  CLOSED
+}
+
+model Job {
+  id             Int           @id @default(autoincrement())
+  source         JobSourceType
+  externalId     String?
+  url            String
+  title          String
+  companyName    String?
+  location       String?
+  remoteType     String? // onsite | hybrid | remote (free text for MVP)
+  employmentType String?
+  salaryMin      Int?
+  salaryMax      Int?
+  currency       String?
+  postedAt       DateTime?
+  expiresAt      DateTime?
+  tags           Json?
+  description    String?       @db.Text
+  status         JobStatus     @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([source, externalId])
+  @@index([title])
+}
+
 // Subscription & Billing
 
 enum PlanInterval {

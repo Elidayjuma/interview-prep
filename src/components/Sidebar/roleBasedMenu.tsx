@@ -31,17 +31,11 @@ const allMenuGroups = [
                 label: "Billing",
                 route: "/dashboard/billing",
             },
-            // {
-            //     icon: <BriefcaseIcon className="size-6" />,
-            //     label: "Gigs",
-            //     route: "#",
-            //     roles: ["DRIVER", "OWNER", "ADMIN", "CLIENT"],
-            //     children: [
-            //         { label: "My Gigs", route: "/gigs" },
-            //         { label: "Gigs Market", route: "/gigs/market" },
-            //         { label: "Add Gig", route: "/gigs/add" },
-            //     ],
-            // },
+            {
+                icon: <BriefcaseIcon className="size-6" />,
+                label: "Jobs Board",
+                route: "/dashboard/jobs",
+            },
 
             {
                 icon: <BookOpenIcon className="size-6" />,

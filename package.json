@@ -6,7 +6,9 @@
     "dev": "prisma generate && next dev",
     "build": "prisma generate && next build",
     "start": "next start -p 8418",
-    "lint": "next lint"
+  "lint": "next lint",
+  "jobs:ingest": "node scripts/ingest-jobs.mjs",
+  "cron:daily": "node scripts/cron-daily.mjs"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
