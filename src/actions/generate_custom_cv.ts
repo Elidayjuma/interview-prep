@@ -1,6 +1,8 @@
 "use server";
 
 import { OpenAI } from "openai";
+import { incrementPromptUsage, getPromptUsage } from "@/actions/actions";
+import { session_data } from "../middleware";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY! });
 
@@ -8,6 +10,17 @@ export async function generateCustomCv(job_description: string, cv: string): Pro
   if (!job_description.trim()) return "";
 
   try {
+    // Enforce prompt limits (best-effort)
+    try {
+      const session = await session_data();
+      const userId = session?.userId ? parseInt(session.userId as string, 10) : undefined;
+      if (userId) {
+        const usage = await getPromptUsage(userId);
+        if (Number.isFinite(usage.promptLimitMonthly as number) && (usage.remaining as number) <= 0) {
+          return "";
+        }
+      }
+    } catch {}
     const basePrompt = `Based on the job description below and Cv provided, generate custom Cv for this job advert.
           Job Description:
           ${job_description}
@@ -16,7 +29,7 @@ export async function generateCustomCv(job_description: string, cv: string): Pro
           Do not include any explanation or commentary. `;
 
 
-    const response = await openai.chat.completions.create({
+  const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -28,6 +41,15 @@ export async function generateCustomCv(job_description: string, cv: string): Pro
     });
 
     const content = response.choices[0].message?.content?.trim();
+
+    // Track usage (best-effort)
+    try {
+      const session = await session_data();
+      const userId = session?.userId ? parseInt(session.userId as string, 10) : undefined;
+      if (userId) {
+        await incrementPromptUsage(userId, 1);
+      }
+    } catch {}
 
 if (!content) return "";
 

@@ -15,13 +15,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tokens      Token[]
-  userDetail  UserDetail?
-  educations  Education[]
-  experiences Experience[]
-  skills      Skill[]      @relation("UserSkills")
-  tools       Tool[]       @relation("UserTools")
-  Hobby       Hobby[]      @relation("UserHobbies")
+  tokens        Token[]
+  userDetail    UserDetail?
+  educations    Education[]
+  experiences   Experience[]
+  skills        Skill[]            @relation("UserSkills")
+  tools         Tool[]             @relation("UserTools")
+  Hobby         Hobby[]            @relation("UserHobbies")
+  subscriptions UserSubscription[]
 }
 
 model UserDetail {
@@ -102,4 +103,54 @@ model Experience {
   updatedAt        DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Subscription & Billing
+
+enum PlanInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAST_DUE
+}
+
+model SubscriptionPlan {
+  id                 Int          @id @default(autoincrement())
+  name               String       @unique
+  priceCents         Int          @default(0) // smallest currency unit
+  currency           String       @default("USD")
+  interval           PlanInterval
+  promptLimitMonthly Int? // null means unlimited
+  description        String?
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  subscriptions UserSubscription[]
+}
+
+model UserSubscription {
+  id                 Int                @id @default(autoincrement())
+  userId             Int
+  planId             Int
+  status             SubscriptionStatus @default(ACTIVE)
+  startedAt          DateTime           @default(now())
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime?
+  cancelAt           DateTime?
+  externalProvider   String?
+  externalReference  String?
+  promptsUsed        Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
 }

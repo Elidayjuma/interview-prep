@@ -26,6 +26,11 @@ const allMenuGroups = [
                 label: "Resume Builder",
                 route: "/dashboard/resume-builder",
             },
+            {
+                icon: <BanknotesIcon className="size-6" />,
+                label: "Billing",
+                route: "/dashboard/billing",
+            },
             // {
             //     icon: <BriefcaseIcon className="size-6" />,
             //     label: "Gigs",

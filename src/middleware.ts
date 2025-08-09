@@ -2,12 +2,12 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt } from "./app/lib/session";
 
-const protectedRoutes = ["/dashboard","/profile","prompts","prompts/add","sites","sites/add","/home"];
+const protectedRoutes = ["/dashboard","/dashboard/billing","/dashboard/resume-builder","/profile","prompts","prompts/add","sites","sites/add","/home"];
 const publicRoutes = ["/","/auth/signin", "/auth/signup", "/auth/forgot-password", "/auth/reset-password"];
 
 export default async function middleware(req: NextRequest) {
     const path = req.nextUrl.pathname;
-    const isProtectedRoute = protectedRoutes.includes(path);
+    const isProtectedRoute = protectedRoutes.includes(path) || path.startsWith('/dashboard/');
     const isPublicRoute = publicRoutes.includes(path);
 
     const cookie = (await cookies()).get("session")?.value;

@@ -1,13 +1,24 @@
 'use client';
 import { tiers } from "@/data/pricing";
+import { createPaystackCheckout } from "@/actions/payments";
 import { FaCheckCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 const PricingSection = () => {
     const router = useRouter();
 
-    const handleClick = (link: string) => {
-        router.push(link);
+    const handleClick = async (tier: any) => {
+        if (tier.price === 0) {
+            router.push(tier.link);
+            return;
+        }
+        const res = await createPaystackCheckout(tier.name);
+        if ((res as any).ok && (res as any).authorization_url) {
+            router.push((res as any).authorization_url);
+        } else {
+            // fallback to gateway redirect if init fails
+            router.push(`/gateway/paystack?plan=${encodeURIComponent(tier.name)}`);
+        }
     };
 
     return (
@@ -46,7 +57,7 @@ const PricingSection = () => {
                             </ul>
                             <div className="w-full mt-auto">
                                 <button
-                                    onClick={() => handleClick(tier.link)}
+                                    onClick={() => handleClick(tier)}
                                     className={`w-full py-2 rounded font-semibold ${tier.name === "Pro"
                                         ? "bg-primary text-white"
                                         : "bg-primary text-white"

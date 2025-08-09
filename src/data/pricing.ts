@@ -21,6 +21,7 @@ export const tiers: IPricing[] = [
             'CV & cover letter generation',
             'Interview Q&A generation',
         ],
+        // link: 'https://paystack.shop/pay/interviewprep_starter', //test
         link: 'https://paystack.shop/pay/interviewprep_starterplan'
     },
     {
@@ -33,6 +34,7 @@ export const tiers: IPricing[] = [
             'CV & cover letter generation',
             'Interview Q&A generation',
         ],
+        // link: 'https://paystack.shop/pay/interviewprep_pro', //test
         link: 'https://paystack.shop/pay/interviewprep_proplan'
     },
 ];

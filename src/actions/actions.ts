@@ -290,3 +290,76 @@ export async function addHobbyToUser(userId: number, hobbyName: string) {
     });
     return hobby;
 }
+
+// ===== Billing & Subscriptions =====
+
+export async function listSubscriptionPlans() {
+    const db = prisma as any;
+    return db.subscriptionPlan.findMany({
+        where: { isActive: true },
+        orderBy: [{ priceCents: 'asc' }],
+    });
+}
+
+export async function getActiveUserSubscription(userId: number) {
+    const db = prisma as any;
+    return db.userSubscription.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        include: { plan: true },
+        orderBy: { startedAt: 'desc' },
+    });
+}
+
+export async function startOrUpgradeSubscription(params: {
+    userId: number;
+    planId: number;
+    externalProvider?: string; // e.g., 'paystack'
+    externalReference?: string; // provider reference/transaction
+    periodEnd?: Date; // set currentPeriodEnd if known
+}) {
+    // Cancel existing active subscription (soft cancel)
+    const db = prisma as any;
+    await db.userSubscription.updateMany({
+        where: { userId: params.userId, status: 'ACTIVE' },
+        data: { status: 'CANCELED', cancelAt: new Date() },
+    });
+
+    const now = new Date();
+    return db.userSubscription.create({
+        data: {
+            userId: params.userId,
+            planId: params.planId,
+            status: 'ACTIVE',
+            startedAt: now,
+            currentPeriodStart: now,
+            currentPeriodEnd: params.periodEnd,
+            externalProvider: params.externalProvider,
+            externalReference: params.externalReference,
+        },
+        include: { plan: true },
+    });
+}
+
+export async function getPromptUsage(userId: number) {
+    const db = prisma as any;
+    const sub = await db.userSubscription.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        include: { plan: true },
+    });
+    if (!sub) return { promptsUsed: 0, promptLimitMonthly: 10, remaining: 10 };
+
+    const limit = sub.plan.promptLimitMonthly ?? Infinity;
+    const used = sub.promptsUsed ?? 0;
+    const remaining = Number.isFinite(limit) ? Math.max(0, limit - used) : Infinity;
+    return { promptsUsed: used, promptLimitMonthly: limit, remaining };
+}
+
+export async function incrementPromptUsage(userId: number, count = 1) {
+    const db = prisma as any;
+    const active = await db.userSubscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+    if (!active) return null;
+    return db.userSubscription.update({
+        where: { id: active.id },
+        data: { promptsUsed: { increment: count } },
+    });
+}
