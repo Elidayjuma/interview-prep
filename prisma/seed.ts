@@ -4,7 +4,7 @@ const prismaAny = new PrismaClient() as any;
 
 async function main() {
   // Upsert subscription plans aligned with current pricing
-  await prismaAny.subscriptionPlan.upsert({
+  await prismaAny.SubscriptionPlan.upsert({
     where: { name: "Free" },
     update: {
       priceCents: 0,
@@ -25,7 +25,7 @@ async function main() {
     },
   });
 
-  await prismaAny.subscriptionPlan.upsert({
+  await prismaAny.SubscriptionPlan.upsert({
     where: { name: "Starter" },
     update: {
       priceCents: 1000,
@@ -46,7 +46,7 @@ async function main() {
     },
   });
 
-  await prismaAny.subscriptionPlan.upsert({
+  await prismaAny.SubscriptionPlan.upsert({
     where: { name: "Pro" },
     update: {
       priceCents: 10000,
