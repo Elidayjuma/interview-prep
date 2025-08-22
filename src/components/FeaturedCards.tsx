@@ -12,6 +12,11 @@ const features = [
         icon: "✉️",
     },
     {
+        title: "Jobs Board",
+        description: "Access regularly updated job positions and apply easily using our state of the art platform.",
+        icon: "🔄",
+    },
+    {
         title: "Interview Questions",
         description: "Get customized interview questions based on the job description, including technical and behavioral questions.",
         icon: "❓",
@@ -41,11 +46,7 @@ const features = [
         description: "Get content that matches current industry standards and employer expectations.",
         icon: "🎯",
     },
-    {
-        title: "Continuous Updates",
-        description: "Access regularly updated templates and questions that reflect the latest job market trends.",
-        icon: "🔄",
-    },
+
 ];
 
 const FeatureCards: React.FC = () => (
