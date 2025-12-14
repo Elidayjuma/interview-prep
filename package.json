@@ -6,9 +6,9 @@
     "dev": "prisma generate && next dev",
     "build": "prisma generate && next build",
     "start": "next start -p 8418",
-  "lint": "next lint",
-  "jobs:ingest": "node scripts/ingest-jobs.mjs",
-  "cron:daily": "node scripts/cron-daily.mjs"
+    "lint": "next lint",
+    "jobs:ingest": "node scripts/ingest-jobs.mjs",
+    "cron:daily": "node scripts/cron-daily.mjs"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -27,7 +27,7 @@
     "jose": "^5.9.6",
     "jspdf": "^3.0.1",
     "jsvectormap": "^1.6.0",
-    "next": "15.0.3",
+    "next": "15.0.7",
     "next-share": "^0.27.0",
     "next-themes": "^0.4.3",
     "nodemailer": "^7.0.3",
