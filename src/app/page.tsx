@@ -11,7 +11,7 @@ const HomePage: React.FC = () => {
     <WebLayout>
       <Hero2 />
       <FeatureCards />
-      <Pricing />
+      {/* <Pricing /> */}
       <Container>
 
         <FAQ />
