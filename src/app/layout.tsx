@@ -33,8 +33,8 @@ export default function RootLayout({
           {loading ? <Loader /> : children}
 
           <Script defer data-domain="interviewprep.elidayjuma.com" src="https://analytics.elidayjuma.com/js/script.outbound-links.js" />
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2092375407734215"
-            crossOrigin="anonymous"></script>
+          <Script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2092375407734215"
+            crossOrigin="anonymous" />
         </div>
       </body>
     </html>
