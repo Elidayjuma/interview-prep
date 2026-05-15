@@ -29,7 +29,7 @@ model UserDetail {
   id                  Int     @id @default(autoincrement())
   userId              Int     @unique
   careerTitle         String?
-  professionalSummary String?
+  professionalSummary String? @db.Text
   phoneNumber         String?
   linkedinUrl         String?
   githubUrl           String?
@@ -62,7 +62,7 @@ model Education {
   startDate    DateTime
   endDate      DateTime?
   grade        String?
-  description  String?
+  description  String?   @db.Text
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -191,4 +191,13 @@ model UserSubscription {
   plan SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@index([userId, status])
+}
+
+model UnregisteredRequest {
+  id        Int      @id @default(autoincrement())
+  ip        String
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([ip, date])
 }

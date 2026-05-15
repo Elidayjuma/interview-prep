@@ -4,8 +4,9 @@ import React, { useState, ChangeEvent, useRef } from "react";
 import { generateCustomCv } from "@/actions/generate_custom_cv";
 import { generateCoverLetter } from "@/actions/generate_cover_letter";
 import ReactMarkdown from "react-markdown";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import CVTemplateSelector from "./cv-templates";
+import { ResumeData } from "./cv-templates/types";
+
 
 const InputForm: React.FC = () => {
     const CHAR_LIMIT = 5000;
@@ -13,6 +14,7 @@ const InputForm: React.FC = () => {
 
     const [description, setDescription] = useState<string>("");
     const [customCv, setCustomCv] = useState<string>("");
+    const [resumeData, setResumeData] = useState<ResumeData | null>(null);
     const [customCoverLetter, setCustomCoverLetter] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>("");
@@ -100,10 +102,32 @@ const InputForm: React.FC = () => {
             const customCvfromActions = await generateCustomCv(description, userContext);
             const customCoverLetterFromActions = await generateCoverLetter(description, userContext);
 
+            if (customCvfromActions.startsWith("ERROR:")) {
+                const reason = customCvfromActions.replace("ERROR: ", "");
+                if (reason === "GLOBAL_LIMIT_REACHED") {
+                    setError("The daily limit for guest requests has been reached globally. Please sign in to continue using our AI services.");
+                } else if (reason === "IP_LIMIT_REACHED") {
+                    setError("You have reached your daily limit of 2 guest requests. Please sign up for a free account to continue.");
+                } else if (reason === "LIMIT_REACHED") {
+                    setError("Your monthly prompt limit has been reached. Please check your billing dashboard to upgrade.");
+                } else {
+                    setError("Usage limit reached or an error occurred. Please sign in.");
+                }
+                setLoading(false);
+                return;
+            }
+
             if (!customCvfromActions) {
                 setError("Failed to generate custom CV. Try again.");
             } else {
-                setCustomCv(customCvfromActions);
+                try {
+                    const parsedData = JSON.parse(customCvfromActions);
+                    setResumeData(parsedData);
+                    setCustomCv(customCvfromActions);
+                } catch (e) {
+                    console.error("Failed to parse resume JSON:", e);
+                    setError("Failed to format the generated CV. Please try again.");
+                }
                 setCustomCoverLetter(customCoverLetterFromActions);
             }
         } catch (err) {
@@ -168,26 +192,10 @@ const InputForm: React.FC = () => {
             </div>
 
             {/* Custom CV Output */}
-            {customCv && (
-                <div className="mx-auto max-w-4xl p-4 mt-10">
-                    <h3 className="text-xl font-semibold mb-4">Your Custom CV:</h3>
-                    <div
-                        ref={pdfRef}
-                        id="cv-content"
-                        className="bg-white border border-gray-300 rounded-lg p-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-800"
-
-                    >
-                        <ReactMarkdown>{customCv}</ReactMarkdown>
-                    </div>
-                    <div className="mt-4 flex justify-center gap-3">
-
-                        <button
-                            onClick={() => copyHtmlToClipboard("cv-content")}
-                            className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-4 py-2"
-                        >
-                            Copy to Clipboard
-                        </button>
-                    </div>
+            {resumeData && (
+                <div className="mx-auto max-w-5xl p-4 mt-16">
+                    <h3 className="text-2xl font-black mb-10 text-center text-slate-900 uppercase tracking-[0.2em]">Select Your Resume Template</h3>
+                    <CVTemplateSelector data={resumeData} />
                 </div>
             )}
             {/* Custom Cover Letter Output */}

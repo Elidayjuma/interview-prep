@@ -9,7 +9,11 @@ function formatDate(dateStr?: string) {
     return `${day}-${month}-${year}`;
 }
 
-const ResumePreviewSection = () => {
+interface ResumePreviewSectionProps {
+    onGoToSummary?: () => void;
+}
+
+const ResumePreviewSection = ({ onGoToSummary }: ResumePreviewSectionProps) => {
     const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
@@ -27,8 +31,20 @@ const ResumePreviewSection = () => {
             {/* Header */}
             <div className="flex flex-col items-center border-b pb-4 mb-6">
                 <h1 className="text-3xl font-bold">{user.name}</h1>
-                {userDetail?.careerTitle && (
-                    <h2 className="text-lg font-semibold text-secondary">{userDetail.careerTitle}</h2>
+                {userDetail?.careerTitle ? (
+                    <h2 className="text-lg font-semibold text-secondary">
+                        {userDetail.careerTitle}
+                    </h2>
+                ) : (
+                    <h2 className="text-gray-500 mt-2">
+                        You have not built your resume yet.{" "}
+                        <button 
+                            onClick={onGoToSummary} 
+                            className="text-primary hover:underline font-medium"
+                        >
+                            Click here to build it in the Summary tab
+                        </button>
+                    </h2>
                 )}
                 <div className="flex flex-wrap gap-4 mt-2 text-gray-600 text-sm justify-center">
                     {userDetail?.phoneNumber && <span>📞 {userDetail.phoneNumber}</span>}

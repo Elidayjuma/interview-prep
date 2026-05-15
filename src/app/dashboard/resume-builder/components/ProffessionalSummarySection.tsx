@@ -14,7 +14,7 @@ const initialUserDetail = {
 };
 
 const ProffessionalSummarySection = () => {
-    const [editing, setEditing] = useState(false);
+    const [editing, setEditing] = useState(true);
     const [userDetail, setUserDetail] = useState(initialUserDetail);
     const [form, setForm] = useState(initialUserDetail);
     const [user, setUser] = useState<any>(null);
@@ -36,7 +36,12 @@ const ProffessionalSummarySection = () => {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === "professionalSummary") {
+            setForm({ ...form, [name]: value.slice(0, 3000) });
+        } else {
+            setForm({ ...form, [name]: value });
+        }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -85,15 +90,20 @@ const ProffessionalSummarySection = () => {
                         placeholder="Career Title (optional)"
                         className="w-full border rounded p-2"
                     />
-                    <textarea
-                        name="professionalSummary"
-                        className="w-full border rounded p-2"
-                        rows={4}
-                        value={form.professionalSummary || ""}
-                        onChange={handleChange}
-                        placeholder="Professional Summary"
-                        required
-                    />
+                    <div className="relative">
+                        <textarea
+                            name="professionalSummary"
+                            className="w-full border rounded p-2"
+                            rows={6}
+                            value={form.professionalSummary || ""}
+                            onChange={handleChange}
+                            placeholder="Professional Summary"
+                            required
+                        />
+                        <div className="text-right text-xs text-gray-400 mt-1">
+                            {(form.professionalSummary || "").length}/3000 characters
+                        </div>
+                    </div>
                     <input
                         type="text"
                         name="phoneNumber"

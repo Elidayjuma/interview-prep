@@ -76,14 +76,29 @@ export async function createUser(prevState: FormState, formData: FormData): Prom
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create user
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email: formData.get("email") as string,
       name: formData.get("full_name") as string,
       password: hashedPassword,
-  
     },
   });
+
+  // Subscribe to free plan
+  try {
+    const { subscribeToFreePlan } = await import("@/actions/actions");
+    await subscribeToFreePlan(user.id);
+  } catch (err) {
+    console.error("Failed to subscribe new user to free plan:", err);
+  }
+
+  // Send Welcome Email
+  try {
+    const { CommunicationService } = await import("@/lib/communication");
+    await CommunicationService.sendWelcomeEmail(user.email, user.name || "there");
+  } catch (err) {
+    console.error("Failed to send welcome email:", err);
+  }
 
   redirect("/auth/signin");
 } 

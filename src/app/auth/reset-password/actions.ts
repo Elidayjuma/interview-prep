@@ -3,7 +3,6 @@
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { randomBytes } from "crypto";
-import { sendPasswordResetEmail } from "@/lib/email";
 const bcrypt = require('bcryptjs');
 
 
@@ -99,7 +98,12 @@ export async function requestPasswordReset(prevState: any, formData: FormData) {
 
   // Send reset email
   const resetUrl = `${process.env.BASE_URL}/auth/reset-password/token/${resetToken}`;
-  await sendPasswordResetEmail(email, resetUrl);
+  try {
+    const { CommunicationService } = await import("@/lib/communication");
+    await CommunicationService.sendPasswordResetEmail(email, user.name || "there", resetUrl);
+  } catch (err) {
+    console.error("Failed to send reset email:", err);
+  }
 
   return {
     success: "Password reset instructions have been sent to your email",

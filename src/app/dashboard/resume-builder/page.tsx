@@ -9,18 +9,18 @@ import ToolsSection from "./components/ToolsSection";
 import HobbiesSection from "./components/HobbiesSection";
 import ResumePreviewSection from "./components/ResumePreviewSection";
 
-const tabs = [
-    { label: "Summary", component: <ResumeSummarySection /> },
-    { label: "Education", component: <EducationSection /> },
-    { label: "Experience", component: <ExperienceSection /> },
-    { label: "Tools", component: <ToolsSection /> },
-    { label: "Skills", component: <SkillsSection /> },
-    { label: "Hobbies", component: <HobbiesSection /> },
-    { label: "Preview", component: <ResumePreviewSection /> },
-];
-
 export default function ResumeBuilder() {
     const [activeTab, setActiveTab] = useState(0);
+
+    const tabs = [
+        { label: "Preview", component: <ResumePreviewSection onGoToSummary={() => setActiveTab(1)} /> },
+        { label: "Summary", component: <ResumeSummarySection /> },
+        { label: "Education", component: <EducationSection /> },
+        { label: "Experience", component: <ExperienceSection /> },
+        { label: "Tools", component: <ToolsSection /> },
+        { label: "Skills", component: <SkillsSection /> },
+        { label: "Hobbies", component: <HobbiesSection /> },
+    ];
 
     return (
         <DashLayout>

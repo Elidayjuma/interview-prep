@@ -45,7 +45,19 @@ const InputForm: React.FC = () => {
         const customCvfromActions = await generateCustomCv(description, cv);
         if (!customCvfromActions) {
             setError("Failed to generate custom CV. Try again.");
-        } else {
+        } else if (customCvfromActions.startsWith("ERROR:")) {
+            const reason = customCvfromActions.replace("ERROR: ", "");
+            if (reason === "GLOBAL_LIMIT_REACHED") {
+                setError("The daily limit for guest requests has been reached globally. Please sign in to continue.");
+            } else if (reason === "IP_LIMIT_REACHED") {
+                setError("You have reached your daily limit of 2 guest requests. Please sign up for a free account to continue.");
+            } else if (reason === "LIMIT_REACHED") {
+                setError("Your monthly prompt limit has been reached. Please check your billing dashboard to upgrade.");
+            } else {
+                setError("Usage limit reached or an error occurred. Please sign in.");
+            }
+        }
+        else {
             setCustomCv(customCvfromActions);
         }
         setLoading(false);

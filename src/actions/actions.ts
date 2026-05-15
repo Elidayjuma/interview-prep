@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/db";
 import { session_data } from "../middleware";
+import { headers } from "next/headers";
 
 export async function returnLogedIUser() {
     const logeduser = await session_data();
@@ -310,6 +311,22 @@ export async function getActiveUserSubscription(userId: number) {
     });
 }
 
+export async function subscribeToFreePlan(userId: number) {
+    const db = prisma as any;
+    const freePlan = await db.subscriptionPlan.findUnique({ where: { name: "Free" } });
+    if (!freePlan) return null;
+
+    return db.userSubscription.create({
+        data: {
+            userId,
+            planId: freePlan.id,
+            status: 'ACTIVE',
+            startedAt: new Date(),
+            currentPeriodStart: new Date(),
+        }
+    });
+}
+
 export async function startOrUpgradeSubscription(params: {
     userId: number;
     planId: number;
@@ -342,10 +359,19 @@ export async function startOrUpgradeSubscription(params: {
 
 export async function getPromptUsage(userId: number) {
     const db = prisma as any;
-    const sub = await db.userSubscription.findFirst({
+    let sub = await db.userSubscription.findFirst({
         where: { userId, status: 'ACTIVE' },
         include: { plan: true },
     });
+
+    if (!sub) {
+        await subscribeToFreePlan(userId);
+        sub = await db.userSubscription.findFirst({
+            where: { userId, status: 'ACTIVE' },
+            include: { plan: true },
+        });
+    }
+
     if (!sub) return { promptsUsed: 0, promptLimitMonthly: 10, remaining: 10 };
 
     const limit = sub.plan.promptLimitMonthly ?? Infinity;
@@ -356,10 +382,59 @@ export async function getPromptUsage(userId: number) {
 
 export async function incrementPromptUsage(userId: number, count = 1) {
     const db = prisma as any;
-    const active = await db.userSubscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+    let active = await db.userSubscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+
+    if (!active) {
+        await subscribeToFreePlan(userId);
+        active = await db.userSubscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+    }
+
     if (!active) return null;
+
     return db.userSubscription.update({
         where: { id: active.id },
         data: { promptsUsed: { increment: count } },
     });
+}
+
+export async function checkAndTrackUnregisteredUsage() {
+    const db = prisma as any;
+
+    // Safety check for when prisma generate hasn't run yet
+    if (!db.unregisteredRequest) {
+        console.warn("UnregisteredRequest model not found in Prisma client. Rate limiting skipped.");
+        return { allowed: true };
+    }
+
+    const headerList = await headers();
+    const forwarded = headerList.get("x-forwarded-for");
+    const ip = forwarded ? forwarded.split(',')[0] : "127.0.0.1";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Global daily limit check (10 total requests)
+    const globalCount = await db.unregisteredRequest.count({
+        where: { createdAt: { gte: today } }
+    });
+
+    if (globalCount >= 10) {
+        return { allowed: false, reason: "GLOBAL_LIMIT_REACHED" }; // Global based rate limiting
+    }
+
+    // IP daily limit check (2 requests per user)
+    const ipCount = await db.unregisteredRequest.count({
+        where: { ip, createdAt: { gte: today } }
+    });
+
+    if (ipCount >= 2) {
+        return { allowed: false, reason: "IP_LIMIT_REACHED" }; //Ip based rate limiting
+    }
+
+    // Record the usage
+    await db.unregisteredRequest.create({
+        data: { ip, date: today }
+    });
+
+    return { allowed: true };
 }
